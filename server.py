@@ -17,7 +17,7 @@ if min(len(PHONE_TOKEN), len(TV_TOKEN)) < 32 or PHONE_TOKEN == TV_TOKEN:
 BASIC = frozenset(("HOME","BACK","UP","DOWN","LEFT","RIGHT","ENTER",
                    "VOLUMEUP","VOLUMEDOWN","MUTE","PLAY","PAUSE"))
 SPECIAL = frozenset(("MOUSE_MOVE","MOUSE_CLICK","MOUSE_SCROLL",
-                     "TEXT","BACKSPACE","TEXT_ENTER","KEYBOARD_STATUS","GET_APPS","LAUNCH_APP"))
+                     "TEXT","BACKSPACE","TEXT_ENTER","KEYBOARD_STATUS","OPEN_KEYBOARD_TEST","GET_APPS","LAUNCH_APP"))
 VALID = BASIC | SPECIAL
 queue = deque()
 receipts = {}
