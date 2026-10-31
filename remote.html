@@ -159,7 +159,17 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
  if(b.dataset.tab==='apps')refreshApps();
  if(b.dataset.tab==='keyboard')command({key:'KEYBOARD_STATUS'});
 }));
-document.getElementById('openTest').addEventListener('click',async()=>{const result=await command({key:'OPEN_KEYBOARD_TEST'});if(result==='done'){notice('Typing test opened on TV. Click the white text box if needed, then check focus.');setTimeout(()=>command({key:'KEYBOARD_STATUS'}),3200)}});
+document.getElementById('openTest').addEventListener('click',async()=>{
+ const result=await command({key:'OPEN_KEYBOARD_TEST'});
+ if(result!=='done')return;
+ notice('Opening typing test and selecting text field…');
+ await new Promise(resolve=>setTimeout(resolve,4100));
+ await command({key:'MOUSE_MOVE',dx:70,dy:90},true);
+ await new Promise(resolve=>setTimeout(resolve,650));
+ await command({key:'MOUSE_CLICK'},true);
+ await new Promise(resolve=>setTimeout(resolve,900));
+ await command({key:'KEYBOARD_STATUS'});
+});
 document.getElementById('checkKeyboard').addEventListener('click',()=>command({key:'KEYBOARD_STATUS'}));
 document.getElementById('sendText').addEventListener('click',async()=>{
  const input=document.getElementById('keyboardText');
