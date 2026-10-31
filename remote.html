@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b111b"><title>Akki TV Remote</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#0b111b;color:#f7f9fd}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;justify-content:center;background:radial-gradient(ellipse at top,#1e3450,#0b111b 66%)}main{width:min(100%,410px);padding:20px 18px 28px}
+h1{font-size:22px;letter-spacing:-.6px;margin:8px 0}p{margin:0}.sub{font-size:13px;color:#a8b5c9;margin-bottom:18px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:5px 0 18px}
+#light{display:inline-block;width:9px;height:9px;background:#edbc62;border-radius:50%;vertical-align:middle;margin-right:6px}
+.status{font-size:12px;border:1px solid #384860;border-radius:24px;padding:8px 10px;white-space:nowrap}
+.credentials{border:1px solid #354057;background:#152033;border-radius:15px;padding:13px;margin-bottom:16px}
+label{display:block;color:#b9c6d7;font-size:12px;margin-bottom:7px}
+input{width:100%;padding:12px;border:1px solid #52617b;border-radius:10px;background:#101b2e;color:#fff;font-size:15px}
+small{color:#8295ad;display:block;margin-top:8px;font-size:11px}
+button{touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent;cursor:pointer;border:1px solid #31445e;background:linear-gradient(#23334a,#182638);color:#eef4ff;border-radius:17px;font-size:16px;font-weight:600;min-height:61px;transition:filter .1s,transform .1s}
+button:active{filter:brightness(1.35);transform:scale(.97)}button:disabled{opacity:.35;cursor:not-allowed}
+.dpad{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:18px 0 15px}.dpad button{min-height:74px;font-size:25px}
+.dpad .ok{border-radius:50%;background:linear-gradient(#4b92fa,#2367d6);border-color:#6c9ef0;font-size:19px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.row button{min-height:60px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.round{font-size:20px}#message{text-align:center;min-height:42px;color:#a8b5c9;font-size:13px;padding:10px}
+.footer{color:#8294a7;text-align:center;font-size:11px;line-height:1.5;margin-top:14px}
+</style></head><body><main>
+<header><div><h1>Akki TV Remote</h1><p class="sub">LG webOS · Anywhere control</p></div><div class="status"><span id="light"></span><span id="connection">Connecting…</span></div></header>
+<div class="credentials"><label for="token">Private remote access key</label>
+<input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your private access key">
+<small>Saved only in this browser. Never share the key.</small></div>
+<div class="dpad">
+<div></div><button data-key="UP" aria-label="Up">▲</button><div></div>
+<button data-key="LEFT" aria-label="Left">◀</button><button class="ok" data-key="ENTER">OK</button><button data-key="RIGHT" aria-label="Right">▶</button>
+<div></div><button data-key="DOWN" aria-label="Down">▼</button><div></div>
+</div>
+<div class="row">
+<button data-key="BACK">↶ Back</button><button data-key="HOME">⌂ Home</button><button data-key="MUTE">Mute</button>
+</div>
+<div class="row2"><button data-key="VOLUMEDOWN">− Volume</button><button data-key="VOLUMEUP">+ Volume</button></div>
+<div class="row2"><button data-key="PLAY">▶ Play</button><button data-key="PAUSE">Ⅱ Pause</button></div>
+<div id="message" role="status" aria-live="polite">Enter your private key to connect.</div>
+<div class="footer">TV must be powered on and connected to the internet.<br>Service uses encrypted cloud communication.</div>
+</main><script>
+const field=document.getElementById('token'),message=document.getElementById('message');
+const connection=document.getElementById('connection'),light=document.getElementById('light');
+field.value=localStorage.getItem('akki_remote_key')||'';
+field.addEventListener('change',()=>{localStorage.setItem('akki_remote_key',field.value.trim());check()});
+function key(){return field.value.trim()}
+function auth(){return {'Authorization':'Bearer '+key()}}
+async function check(){if(key().length<32){connection.textContent='Enter key';light.style.background='#edbc62';return}
+ try{const r=await fetch('/state',{headers:auth(),cache:'no-store'});if(!r.ok)throw Error(r.status===401?'Invalid key':'Network error');
+ const s=await r.json();connection.textContent=s.tv_online?'TV online':'TV offline';
+ light.style.background=s.tv_online?'#45d99b':'#e3a363';
+ }catch(e){connection.textContent=e.message;light.style.background='#f27878'}
+}
+async function send(k){if(key().length<32){message.textContent='Enter your private access key first.';return}
+ localStorage.setItem('akki_remote_key',key());
+ try{const r=await fetch('/command',{method:'POST',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({key:k})});
+ const data=await r.json();if(!r.ok)throw Error(data.error||'Connection failed');
+ message.textContent='Sending '+k.toLowerCase()+'…';
+ for(let n=0;n<10;n++){await new Promise(r=>setTimeout(r,400));
+ const receipt=await fetch('/receipt?id='+encodeURIComponent(data.id),{headers:auth()});
+ if(receipt.ok){const result=await receipt.json();if(result.status==='done'){message.textContent='✓ '+k.toLowerCase()+' sent to TV';return}
+ if(['failed','expired'].includes(result.status)){message.textContent='TV could not complete this command';return}}}
+ message.textContent='Command queued; awaiting TV confirmation';
+ }catch(e){message.textContent=e.message;check()}}
+document.querySelectorAll('[data-key]').forEach(b=>b.addEventListener('click',()=>send(b.dataset.key)));
+check();setInterval(check,12000);
+</script></body></html>
