@@ -17,7 +17,7 @@ if min(len(PHONE_TOKEN), len(TV_TOKEN)) < 32 or PHONE_TOKEN == TV_TOKEN:
 BASIC = frozenset(("HOME","BACK","UP","DOWN","LEFT","RIGHT","ENTER",
                    "VOLUMEUP","VOLUMEDOWN","MUTE","PLAY","PAUSE"))
 SPECIAL = frozenset(("MOUSE_MOVE","MOUSE_CLICK","MOUSE_SCROLL",
-                     "TEXT","BACKSPACE","TEXT_ENTER","GET_APPS","LAUNCH_APP"))
+                     "TEXT","BACKSPACE","TEXT_ENTER","KEYBOARD_STATUS","GET_APPS","LAUNCH_APP"))
 VALID = BASIC | SPECIAL
 queue = deque()
 receipts = {}
@@ -204,6 +204,11 @@ class Handler(BaseHTTPRequestHandler):
                     return self.response(404,{"error":"Unknown command"})
                 status="done" if data.get("ok") is True else "failed"
                 receipts[ident]={"status":status,"ts":time.time()}
+                reason=data.get("reason")
+                if reason in ("no_focus","focus_unavailable","insert_failed","delete_failed","enter_failed"):
+                    receipts[ident]["reason"]=reason
+                if isinstance(data.get("focused"),bool):
+                    receipts[ident]["focused"]=data["focused"]
                 if status=="done" and isinstance(data.get("apps"),list):
                     apps_cache=scrub_apps(data["apps"])
                     apps_updated=time.time()
