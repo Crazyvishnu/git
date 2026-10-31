@@ -40,6 +40,8 @@ button:active{filter:brightness(1.35);transform:scale(.97)}button:disabled{opaci
 </main><script>
 const field=document.getElementById('token'),message=document.getElementById('message');
 const connection=document.getElementById('connection'),light=document.getElementById('light');
+const incoming = new URLSearchParams(location.hash.slice(1)).get('access');
+if(incoming && incoming.length>=32){localStorage.setItem('akki_remote_key',incoming);history.replaceState(null,'',location.pathname+location.search)}
 field.value=localStorage.getItem('akki_remote_key')||'';
 field.addEventListener('change',()=>{localStorage.setItem('akki_remote_key',field.value.trim());check()});
 function key(){return field.value.trim()}
