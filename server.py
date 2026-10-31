@@ -124,6 +124,9 @@ class Handler(BaseHTTPRequestHandler):
         if p=="/":
             with open("remote.html","r",encoding="utf-8") as f:
                 return self.response(200,f.read(),"text/html; charset=utf-8")
+        if p=="/keyboard-test":
+            with open("keyboard-test.html","r",encoding="utf-8") as f:
+                return self.response(200,f.read(),"text/html; charset=utf-8")
         if p=="/health":
             return self.response(200,{"ok":True})
         if p in ("/state","/receipt","/apps") and not self.authorized(PHONE_TOKEN):
