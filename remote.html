@@ -74,6 +74,7 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
 <section id="keyboard" data-panel hidden>
 <h2>Type on your TV</h2>
 <p class="hint" id="focusState">Select a text box on TV to enable keyboard typing.</p>
+<button id="openTest" class="primary" style="width:100%;min-height:44px;margin:8px 0">Open typing test on TV</button>
 <button id="checkKeyboard" style="width:100%;min-height:42px;margin:8px 0 12px">Check TV keyboard focus</button>
 <label for="keyboardText">Text to insert</label>
 <textarea id="keyboardText" maxlength="240" placeholder="Type or paste text here."></textarea>
@@ -158,6 +159,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
  if(b.dataset.tab==='apps')refreshApps();
  if(b.dataset.tab==='keyboard')command({key:'KEYBOARD_STATUS'});
 }));
+document.getElementById('openTest').addEventListener('click',async()=>{const result=await command({key:'OPEN_KEYBOARD_TEST'});if(result==='done'){notice('Typing test opened on TV. Click the white text box if needed, then check focus.');setTimeout(()=>command({key:'KEYBOARD_STATUS'}),3200)}});
 document.getElementById('checkKeyboard').addEventListener('click',()=>command({key:'KEYBOARD_STATUS'}));
 document.getElementById('sendText').addEventListener('click',async()=>{
  const input=document.getElementById('keyboardText');
