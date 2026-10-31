@@ -73,6 +73,8 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
 </section>
 <section id="keyboard" data-panel hidden>
 <h2>Type on your TV</h2>
+<p class="hint" id="focusState">Select a text box on TV to enable keyboard typing.</p>
+<button id="checkKeyboard" style="width:100%;min-height:42px;margin:8px 0 12px">Check TV keyboard focus</button>
 <label for="keyboardText">Text to insert</label>
 <textarea id="keyboardText" maxlength="240" placeholder="Type or paste text here."></textarea>
 <p class="hint">Select a text field on the TV first. Only the text you send is transmitted; some apps block remote keyboard input.</p>
@@ -111,9 +113,9 @@ async function receipt(id,max=16){
  const r=await fetch('/receipt?id='+encodeURIComponent(id),{headers:auth(),cache:'no-store'});
  if(!r.ok)throw Error('Could not confirm command');
  const data=await r.json();
- if(['done','failed','expired'].includes(data.status))return data.status;
+ if(['done','failed','expired'].includes(data.status))return data;
  }
- return 'pending';
+ return {status:'pending'};
 }
 async function command(cmd,quiet=false){
  if(key().length<32){if(!quiet)notice('Enter your private access key first');return 'invalid'}
@@ -124,9 +126,24 @@ async function command(cmd,quiet=false){
  if(!r.ok)throw Error(data.error||'Command rejected');
  if(quiet)return 'queued';
  notice('Sending '+cmd.key.toLowerCase().replaceAll('_',' ')+'…');
- const state=await receipt(data.id);
- if(state==='done'){notice('✓ Command delivered to TV');return 'done'}
- if(state==='failed'||state==='expired'){notice('TV could not complete this command');return state}
+ const result=await receipt(data.id),state=result.status;
+ if(cmd.key==='KEYBOARD_STATUS'){
+  const focus=document.getElementById('focusState');
+  if(state==='done'){
+   const label=result.focused?'TV text field selected ✓':'No text field selected on TV';
+   focus.textContent=label;
+   notice(result.focused?'Keyboard ready. Type on your phone.':'Open a TV search/text box first using Mouse, then tap Check TV keyboard focus.');
+  }else{focus.textContent='Could not check TV keyboard focus';notice('TV keyboard status unavailable')}
+  return state;
+ }
+ if(state==='done'){notice('✓ Command accepted by TV');return 'done'}
+ if(state==='failed'||state==='expired'){
+  const reason=result.reason;
+  if(reason==='no_focus'){notice('First select a text field on TV with Mouse. Then Send Text.');document.getElementById('focusState').textContent='TV text field not selected';}
+  else if(reason==='focus_unavailable')notice('Cannot read TV keyboard focus right now.');
+  else notice('TV could not complete this command ('+(reason||state)+')');
+  return state;
+ }
  notice('Command queued; waiting for TV');return state;
  }catch(e){if(!quiet){notice(e.message);check()}return 'error'}
 }
@@ -139,7 +156,9 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
  document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
  document.querySelectorAll('[data-panel]').forEach(x=>x.hidden=x.id!==b.dataset.tab);
  if(b.dataset.tab==='apps')refreshApps();
+ if(b.dataset.tab==='keyboard')command({key:'KEYBOARD_STATUS'});
 }));
+document.getElementById('checkKeyboard').addEventListener('click',()=>command({key:'KEYBOARD_STATUS'}));
 document.getElementById('sendText').addEventListener('click',async()=>{
  const input=document.getElementById('keyboardText');
  const text=input.value;
