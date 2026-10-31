@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Akki Keyboard Test</title>
+<style>html,body{margin:0;min-height:100%;background:#101a2a;color:white;font-family:Arial,sans-serif}main{max-width:780px;margin:80px auto;padding:20px}h1{font-size:44px}p{font-size:24px;color:#bacde7}.test{width:98%;font-size:32px;padding:18px;background:#e8f2ff;color:#101929;border:5px solid #4b9eff;border-radius:16px;display:block;margin:30px 0}.active{color:#80f4bf}button{font-size:23px;padding:15px;background:#1e528f;color:white;border:2px solid #5ca8ff;border-radius:12px}</style>
+</head><body><main>
+<h1>Akki TV Keyboard Test</h1>
+<p>Type into this field with your phone remote.</p>
+<input class="test" id="target" type="text" spellcheck="false" autocomplete="off" placeholder="Click or select here to type">
+<p id="state">Please select the box above</p>
+<button id="focus" onclick="activate()">Select text field</button>
+</main>
+<script>
+function activate(){var x=document.getElementById('target');x.focus();document.getElementById('state').innerHTML='Text field selected';}
+document.getElementById('target').onfocus=function(){document.getElementById('state').innerHTML='Ready for remote typing';}
+document.getElementById('target').oninput=function(){document.getElementById('state').innerHTML='Received text (in field above)';}
+setTimeout(activate,900);
+</script></body></html>
